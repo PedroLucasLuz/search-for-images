@@ -4,14 +4,11 @@ const apiKey = "AIzaSyASp_XdzMqQ9NpLm4HZvbkPosyA0wyMzm8";
 // ID do mecanismo de pesquisa personalizado
 const searchEngineId = "c2845fc49506a47b3";
 
-
 const numResults = 10;
-
 
 const imageContainer = document.getElementById("image-container");
 
 const searchForm = document.getElementById("search-form");
-
 
 searchForm.addEventListener("submit", function (event) {
   event.preventDefault();
@@ -36,10 +33,44 @@ async function fetchImages(searchTerm) {
     // Exibir as imagens
     images.forEach((image) => {
       const imgElement = document.createElement("img");
-      imgElement.src = image.link;
-      imageContainer.appendChild(imgElement);
+      const aElement = document.createElement("a");
+
+      // Transforma em base64
+      imageToBase64(image.link)
+        .then((base64Image) => {
+          // Verifica se conseguiu transformar em base64
+          if (base64Image != null) {
+            console.log("Imagem convertida em base64:", base64Image);
+
+            // Só adiciona ao HTML aquelas cujo base64 foi possível ser gerado
+            // uma vez que a gente só quer essas
+            aElement.href = image.link;
+            imgElement.src = image.link;
+            aElement.appendChild(imgElement);
+            imageContainer.appendChild(aElement);
+          }
+        })
+        .catch((error) => {
+          console.error("Erro ao converter imagem em base64:", error);
+        });
     });
   } catch (error) {
     console.log("Ocorreu um erro:", error);
+  }
+}
+
+async function imageToBase64(imageUrl) {
+  try {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Erro ao converter imagem em base64:", error);
+    return null;
   }
 }
